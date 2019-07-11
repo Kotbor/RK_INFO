@@ -102,9 +102,9 @@ def RequestNameInHall(namehall):
                             WHERE h.DEFHALLPLANID = ?''')
     cursor.execute(dishRequestByCode2,(str(hall_ident),))
     rownames = list(map(lambda x: x[0], cursor.description))
-    dishdetails = cursor.fetchone()
-    dish = dict(zip(rownames, dishdetails))
-    return dish
+    tables = cursor.fetchall()
+    #dish = dict(zip(rownames, dishdetails))
+    return tables
 # ----------------------------------- Main Loop --------------------------------------
 CashPlansToSql()
 
