@@ -111,7 +111,6 @@ CashPlansToSql()
 nameinhall = 'Name'
 #myHall = RequestHallInCash(cash_code_plans)
 myHallPlans = RequestNameInHall(nameinhall)
-
 print(myHallPlans)
 
 #output = json.dumps(myHall, ensure_ascii=False, indent=1)
