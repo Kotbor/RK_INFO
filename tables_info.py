@@ -169,25 +169,55 @@ def RequestMenu(cod):
     code = cod
     cursor.execute(dishRequestByCode, [(str(code))]) # Запрашиваем все элементы блюда с определённым кодом
     rownames = list(map(lambda x: x[0], cursor.description))
+
+    tables = cursor.fetchall()
+    #dish = dict(zip(rownames, dishdetails))
+    return tables
+
     dishdetails = cursor.fetchone()
     dish = dict(zip(rownames, dishdetails))
     logging.info('End func ' + ' RequestMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
     return dish
 
+def RequestAllMenu():
+    products=[]
+    logging.info('Start func ' + ' RequestAllMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+    dishRequestByCode = "SELECT GUIDString, Name, Code FROM menuitems WHERE Status='rsActive'"
+    cursor.execute(dishRequestByCode) # Запрашиваем все элементы блюда с определённым кодом
+    #rownames = list(map(lambda x: x[0], cursor.description))
+
+    # dishes = cursor.fetchall()
+    # dish = dict(zip(rownames, dishdetails))
+    # return tables
+
+    dishdetails = cursor.fetchall()
+    for item in dishdetails:
+        products.append({'Price':'','Type':'Dish','Name':item[1],'Code':item[2],'Id':item[0]})
+    #dish = dict(zip(rownames, dishdetails))
+    logging.info('End func ' + ' RequestAllMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+    return products
+
+
+
 # ----------------------------------- Main Loop --------------------------------------
 try:
     sock = socket.socket()
-    sock.bind(('192.168.0.186', 16385))  # Слушаем на всех интерфейсах нужный порт, указанный в конфиге
-    print('Соединение установлено')
+    sock.bind(('127.0.0.1', 16385))  # Слушаем на всех интерфейсах нужный порт, указанный в конфиге
+    print('Сервер запущен')
 except:
     logging.debug("WARNING! Something already stolen this Cash_Port, choose another one. Exiting!")
-    print('Ошибка соединения')
+    print('Не могу запустить сервер')
     sys.exit()
 
 id_hall = 1003563
 myHallPlans = RequestNameInHall(id_hall)
-output = json.dumps(myHallPlans, ensure_ascii=False, indent=1)
+menuItems = RequestAllMenu()
+output = {"Sections":[myHallPlans]}
+menu = {'Groups':'','ProductCategories':'','Products':[menuItems]}
+output['Menu']=menu
+output = json.dumps((output), ensure_ascii=False, indent=1)
 json_write_w(output)
+
 
 while True:
         data = '<body>\n'
@@ -210,7 +240,7 @@ while True:
                 for N in itemsAttribs:
                     if Name['Code'] == N['Code']:
                         myItem = RequestMenu(Name['Code'])
-                        myItem = (myItem['GUIDString'])
+                        myItem = myItem['GUIDString']
                         Dish.append({'Guid': myItem})
 
             output = json.dumps(Dish, ensure_ascii=False, indent=1)
