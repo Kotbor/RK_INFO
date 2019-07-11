@@ -93,17 +93,14 @@ def CashPlansToSql():
 #     return dish
 
 def RequestNameInHall(namehall):
-    hall_ident = '1003563'
-    dishRequestByCode2 = ('''DECLARE @hall_ident int
-                            SET @hall_ident = hall_ident
+    hall_ident = 1003563
+    dishRequestByCode2 = ('''
                             SELECT h.NAME Name, t.NAME NameTable
                             FROM hall h
                             INNER JOIN hallplans hp ON h.DEFHALLPLANID = hp.Ident
                             INNER JOIN tables t ON h.DEFHALLPLANID = t.HALL
-                            WHERE h.DEFHALLPLANID = @hall_ident''', (hall_ident,))
-    hall_ident = namehall
-    cursor.execute(dishRequestByCode2, [(str(hall_ident))])
-#    cursor.fetchall()
+                            WHERE h.DEFHALLPLANID = ?''')
+    cursor.execute(dishRequestByCode2,(str(hall_ident),))
     rownames = list(map(lambda x: x[0], cursor.description))
     dishdetails = cursor.fetchone()
     dish = dict(zip(rownames, dishdetails))
