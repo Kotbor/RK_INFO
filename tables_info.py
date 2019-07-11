@@ -6,13 +6,15 @@ import xml.etree.ElementTree as ET
 import logging
 import sqlite3
 import re
+import socket
+import sys
 
 #########connect_hall.db########
 conn = sqlite3.connect('rk_item.db')
 cursor = conn.cursor()
 ##############logging#############
 logging.basicConfig(filename='tables_info.log', level=logging.INFO)
-logging.info('Start process in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()))
+logging.info('Start programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()))
 print('')
 ############init############
 # def init():
@@ -59,6 +61,25 @@ print('')
 ############write_func############
 
 ##########функция записи в json##########
+
+def recvall():
+    BUFF_SIZE = 2048  # 4 KiB
+    data = b''
+    sock.listen(10)
+    conn, addr = sock.accept()
+    while True:
+        part = conn.recv(BUFF_SIZE)
+        data += part
+        length = len(part)
+        if length < BUFF_SIZE:
+            break
+    return data
+
+
+def json_write_w(out):
+    with open('zakaz.json', 'w', encoding="utf-8") as file:
+        file.write('%s\n' % out)
+
 def json_write(out):
     with open('tables.json', 'a', encoding='utf-8') as file:
         file.write('%s\n' % out)
@@ -88,7 +109,7 @@ def CashPlansToSql():
     root2 = ET.fromstring(MenuItem2)
     root3 = ET.fromstring(MenuItem3)
     root4 = ET.fromstring(MenuItem4)
-    global cashes, all_tables, all_halls
+    global cashes, all_tables, all_halls, itemsAttribs
     itemsAttribs = [x.attrib for x in root4.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #элементы меню
     cashes = [x.attrib for x in root3.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все кассы(тут берём инфу по станции, её ID  и ID плана зала)
     all_tables = [x.attrib for x in root1.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все столы(тут имя стола, его Guid и ID плана зала)
@@ -123,6 +144,7 @@ def CashPlansToSql():
 
 ##############получаем план зала, столы и guid#################
 def RequestNameInHall(hall_ident):
+    logging.info('Start func ' + ' RequestNameInHall ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
     dishRequestByCode2 = ('''
                             SELECT t.NAME NAME, t.GUIDString GUID, hp.Name HALL_NAME 
                             FROM hall h
@@ -139,21 +161,104 @@ def RequestNameInHall(hall_ident):
         hall = {'Name': y[2]}
         hall['Tables'] = plans
         return hall
+    logging.info('End func ' + ' RequestNameInHall ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
 
 def RequestMenu(cod):
+    logging.info('Start func ' + ' RequestMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
     dishRequestByCode = "SELECT * FROM menuitems WHERE Status='rsActive' AND Code=?"
     code = cod
     cursor.execute(dishRequestByCode, [(str(code))]) # Запрашиваем все элементы блюда с определённым кодом
     rownames = list(map(lambda x: x[0], cursor.description))
     dishdetails = cursor.fetchone()
-    dish = dict(zip(rownames,dishdetails))
+    dish = dict(zip(rownames, dishdetails))
+    logging.info('End func ' + ' RequestMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
     return dish
+
 # ----------------------------------- Main Loop --------------------------------------
+try:
+    sock = socket.socket()
+    sock.bind(('192.168.0.186', 16385))  # Слушаем на всех интерфейсах нужный порт, указанный в конфиге
+    print('Соединение установлено')
+except:
+    logging.debug("WARNING! Something already stolen this Cash_Port, choose another one. Exiting!")
+    print('Ошибка соединения')
+    sys.exit()
+
+id_hall = 1003563
+myHallPlans = RequestNameInHall(id_hall)
+output = json.dumps(myHallPlans, ensure_ascii=False, indent=1)
+json_write_w(output)
+
+while True:
+        data = '<body>\n'
+        dat2 = recvall()
+        dat2 = dat2.decode()
+        data += str(dat2)
+        data += '\n</body>'
+        root = ET.fromstring(data)
+        logging.debug(data)
+        for child in root:
+            inside = child.attrib
+
+        if child.tag == 'StoreCheck':  #Сохранение заказа
+            logging.info('Start func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+            Table = child.attrib['Table']
+            all_dishes = [x.attrib for x in child.find('CheckLines').findall('CheckLine')]
+            Dish = []
+            for Name in all_dishes:
+                Dish.append({'CodeDish': Name['Code'], 'NameDish': Name['Name'], 'PriceDish': Name['Price']})
+                for N in itemsAttribs:
+                    if Name['Code'] == N['Code']:
+                        myItem = RequestMenu(Name['Code'])
+                        myItem = (myItem['GUIDString'])
+                        Dish.append({'Guid': myItem})
+
+            output = json.dumps(Dish, ensure_ascii=False, indent=1)
+            json_write_w(output)
+            logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+
+        if child.tag == 'OpenOrder':  #вход в заказ
+            logging.info('Start func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+            Tag = child.tag
+            Time = child.attrib['Time']
+            Name = child[0].attrib['Name']
+            output = {
+                'Operation': Tag,
+                'Time': Time,
+                'Name': Name}
+            output = json.dumps(output, ensure_ascii=False, indent=1)
+            json_write_w(output)
+            logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+
+        if child.tag == 'CloseCheck':  #оплата заказа
+            logging.info('Start func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+            Tag = child.tag
+            Time = child[0].attrib['Time']
+            Summa = child.attrib['Sum']
+            Table = child.attrib['Table']
+            PersName = child[0][0].attrib['Name']
+            output = {
+                'Operation': Tag,
+                'Time': Time,
+                'Table': Table,
+                'Sum': Summa,
+                'Name': PersName
+            }
+            output = json.dumps(output, ensure_ascii=False, indent=1)
+            json_write_w(output)
+            logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+
 #init()
-CashPlansToSql()
-myHallPlans = RequestNameInHall(1003563)
-myItem = RequestMenu(50)
-print(myItem['Name'], myItem['GUIDString'], '\n', myHallPlans)
+#
+# code_dish = 50
+# CashPlansToSql()
+#
+# myItem = RequestMenu(code_dish)
+# myItem = (myItem['Name'], myItem['GUIDString'])
+# print(myItem, '\n', myHallPlans)
+# output = json.dumps(myItem, ensure_ascii=False, indent=1)
+# json_write(output)
 # output = json.dumps(myHallPlans, ensure_ascii=False, indent=1)
 # json_write(output)
-logging.info('End process in ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+
+logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
