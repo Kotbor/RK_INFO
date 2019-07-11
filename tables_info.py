@@ -216,7 +216,7 @@ output = {"Sections":[myHallPlans]}
 menu = {'Groups':'','ProductCategories':'','Products':[menuItems]}
 output['Menu']=menu
 output = json.dumps((output), ensure_ascii=False, indent=1)
-json_write_w(output)
+json_write_w(output) # 123
 
 
 while True:
