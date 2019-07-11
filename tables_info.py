@@ -62,11 +62,11 @@ def CashPlansToSql():
     cashes = [x.attrib for x in root3.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]
     all_tables = [x.attrib for x in root1.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]
     all_halls = [x.attrib for x in root2.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]
-    clear = "DELETE FROM hall"  # Очищаем всё содержмиое sql базы с меню, чтобы загрузить свежее.
+    clear = "DELETE FROM hall" #план зала у станции(отсюда берём id плана зала для связки с кассой)
     cursor.execute(clear)
-    clear2 = "DELETE FROM hallplans"  # Очищаем всё содержмиое sql базы с меню, чтобы загрузить свежее.
+    clear2 = "DELETE FROM hallplans" #все планы залов(отсюда берём код плана зала и имя)
     cursor.execute(clear2)
-    clear3 = "DELETE FROM tables"  # Очищаем всё содержмиое sql базы с меню, чтобы загрузить свежее.
+    clear3 = "DELETE FROM tables" #столы
     cursor.execute(clear3)
     conn.commit()
     for attrib in cashes:
@@ -83,34 +83,39 @@ def CashPlansToSql():
         cursor.execute('''INSERT INTO tables VALUES ('''+ toSql + ''' )''')
     conn.commit()
 
-def RequestHallInCash(cod):
-    dishRequestByCode = "SELECT * FROM hall WHERE Status='rsActive' AND DefHallPlanID=?"
-    code = cod
-    cursor.execute(dishRequestByCode, [(str(code))]) # Запрашиваем все элементы блюда с определённым кодом
+# def RequestHallInCash(cod):
+#     dishRequestByCode = "SELECT * FROM hall WHERE Status='rsActive' AND DefHallPlanID=?"
+#     code = cod
+#     cursor.execute(dishRequestByCode, [(str(code))]) # Запрашиваем все элементы блюда с определённым кодом
+#     rownames = list(map(lambda x: x[0], cursor.description))
+#     dishdetails = cursor.fetchone()
+#     dish = dict(zip(rownames, dishdetails))
+#     return dish
+
+def RequestNameInHall(namehall):
+    hall_ident = '1003563'
+    dishRequestByCode2 = ('''DECLARE @hall_ident int
+                            SET @hall_ident = hall_ident
+                            SELECT h.NAME Name, t.NAME NameTable
+                            FROM hall h
+                            INNER JOIN hallplans hp ON h.DEFHALLPLANID = hp.Ident
+                            INNER JOIN tables t ON h.DEFHALLPLANID = t.HALL
+                            WHERE h.DEFHALLPLANID = @hall_ident''', (hall_ident,))
+    hall_ident = namehall
+    cursor.execute(dishRequestByCode2, [(str(hall_ident))])
+#    cursor.fetchall()
     rownames = list(map(lambda x: x[0], cursor.description))
     dishdetails = cursor.fetchone()
     dish = dict(zip(rownames, dishdetails))
     return dish
-
-def RequestNameInHall(namehall):
-    dishRequestByCode2 = '''SELECT c.NAME Name, t.NAME NameTable
-                            FROM cashes c
-                            INNER JOIN all_halls h ON c.DEFHALLPLANID = h.SIFR
-                            INNER JOIN all_tables t ON c.DEFHALLPLANID = t.HALL'''
-    name = namehall
-    cursor.execute(dishRequestByCode2, [(str(name))]) # Запрашиваем все элементы блюда с определённым кодом
-    rownames = list(map(lambda x: x[0], cursor.description))
-    dishdetails = cursor.fetchone()
-    dish = dict(zip(rownames,dishdetails))
-    return dish
 # ----------------------------------- Main Loop --------------------------------------
 CashPlansToSql()
-cash_code_plans = 1003563
-nameinhall = 'Name'
-myHall = RequestHallInCash(cash_code_plans)# Запрашиваем из загруженного меню элемент с указанным кодом
-myHallPlans = RequestNameInHall(nameinhall)# Запрашиваем из загруженного меню элемент с указанным кодом
 
-print(myHallPlans['Name'])
+nameinhall = 'Name'
+#myHall = RequestHallInCash(cash_code_plans)
+myHallPlans = RequestNameInHall(nameinhall)
+
+print(myHallPlans)
 
 #output = json.dumps(myHall, ensure_ascii=False, indent=1)
 #json_write(output)
