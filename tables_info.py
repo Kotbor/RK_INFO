@@ -233,8 +233,10 @@ CashPlansToSql()
 dish_code = 60
 id_hall = 1003563
 GUID = RequestMenu(dish_code)
+myItem = (GUID['GUIDString'])
 myHallPlans = RequestNameInHall(id_hall)
 menuItems = RequestAllMenu()
+
 output = {"Sections":[myHallPlans]}
 menu = {'Groups':'','ProductCategories':'','Products':[menuItems]}
 output['Menu']=menu
@@ -300,18 +302,5 @@ while True:
             output = json.dumps(output, ensure_ascii=False, indent=1)
             json_write_w(output)
             logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
-
-#init()
-#
-# code_dish = 50
-# CashPlansToSql()
-#
-# myItem = RequestMenu(code_dish)
-# myItem = (myItem['Name'], myItem['GUIDString'])
-# print(myItem, '\n', myHallPlans)
-# output = json.dumps(myItem, ensure_ascii=False, indent=1)
-# json_write(output)
-# output = json.dumps(myHallPlans, ensure_ascii=False, indent=1)
-# json_write(output)
 
 logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
