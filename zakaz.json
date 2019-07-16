@@ -1,0 +1,686 @@
+{
+ "Sections": [
+  {
+   "Name": "новый план зала",
+   "Tables": [
+    {
+     "Number": "1",
+     "Id": "{0B65E2AA-288A-4C47-A05A-2C2D4BC7628B}"
+    },
+    {
+     "Number": "9",
+     "Id": "{19E15C7C-D70E-426C-807B-C8A66996E39E}"
+    },
+    {
+     "Number": "11",
+     "Id": "{1B8578D3-574C-40CD-95E4-37417715F52C}"
+    },
+    {
+     "Number": "13",
+     "Id": "{291A1F45-FD32-4E2D-932E-3F08C8179A8B}"
+    },
+    {
+     "Number": "15",
+     "Id": "{2CCF34A8-7415-4E84-BB6D-9B38C86333FB}"
+    },
+    {
+     "Number": "2",
+     "Id": "{31D6476E-DB48-4BE2-9AA5-CBEC980A683C}"
+    },
+    {
+     "Number": "8",
+     "Id": "{46E157C2-8736-4FAB-9DC1-778A8107D23F}"
+    },
+    {
+     "Number": "21",
+     "Id": "{57600FBE-10EF-44A2-8FF2-C05C98763CAE}"
+    },
+    {
+     "Number": "20",
+     "Id": "{66267E67-DC6B-44B7-8E31-8CFAFFB08480}"
+    },
+    {
+     "Number": "19",
+     "Id": "{6CDAA585-DE45-439B-B07A-1CC5C0763570}"
+    },
+    {
+     "Number": "10",
+     "Id": "{72A4648A-B2E3-429D-A883-C3B700C8B2B3}"
+    },
+    {
+     "Number": "12",
+     "Id": "{8410931E-61BB-4113-BE7B-5D120CB79DCD}"
+    },
+    {
+     "Number": "30",
+     "Id": "{924F2D7B-7F15-4224-B0AC-17E20D112C0C}"
+    },
+    {
+     "Number": "18",
+     "Id": "{A7095702-557B-4478-8ED2-66026DB0E90D}"
+    },
+    {
+     "Number": "16",
+     "Id": "{AAC5ED3E-1009-459C-9DEF-367FFF7ABA01}"
+    },
+    {
+     "Number": "4",
+     "Id": "{C1DACEB8-57AA-45F3-A661-E98080C774F1}"
+    },
+    {
+     "Number": "17",
+     "Id": "{C3A1784A-555B-4F78-B6BB-F647DA939C73}"
+    },
+    {
+     "Number": "6",
+     "Id": "{CB8C2310-A371-4CC6-8958-A308913CA10F}"
+    },
+    {
+     "Number": "14",
+     "Id": "{D5629E93-206D-4AE2-9366-51920405E194}"
+    },
+    {
+     "Number": "3",
+     "Id": "{D7A8CF2E-268E-46BF-BA63-515749C5BBAE}"
+    },
+    {
+     "Number": "5",
+     "Id": "{E8E339AD-A032-44CA-8012-C05778D20E2E}"
+    },
+    {
+     "Number": "7",
+     "Id": "{EA48F1EA-378E-409A-B20B-A41AF68353FC}"
+    }
+   ]
+  }
+ ],
+ "Menu": {
+  "Groups": "",
+  "ProductCategories": "",
+  "Products": [
+   [
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Капучино",
+     "Code": "4",
+     "Id": "{C5B68003-F90C-432C-8285-BE0ECF99408F}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Чай с чебрецом",
+     "Code": "5",
+     "Id": "{5CA4E6DE-D79F-4EDA-BF7F-531C582BC7EF}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Виски",
+     "Code": "6",
+     "Id": "{2B603EF3-7F00-4797-9671-B8459F31739B}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Картошка",
+     "Code": "9",
+     "Id": "{CFAB7C17-AD17-49D5-AA7D-F8953D150A8D}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Водка",
+     "Code": "7",
+     "Id": "{F7A5F7BC-F879-43A6-9AD1-677007B84AF4}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пицца",
+     "Code": "10",
+     "Id": "{C1E66D55-B274-42D7-BFAE-9F228280A939}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пельмени",
+     "Code": "11",
+     "Id": "{F8EFAB06-750F-4184-9AB9-377831FEDB81}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Шашлык",
+     "Code": "12",
+     "Id": "{89D924C8-6BB3-48C7-A3EB-2F878A7D0A91}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пивас",
+     "Code": "3",
+     "Id": "{477BC1B9-9B12-4263-BB69-BD2E3CD6DE9E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Бизнес 1",
+     "Code": "24",
+     "Id": "{70F586D7-3D88-41D5-803B-5DE6E8A88F50}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Открытое блюдо",
+     "Code": "31",
+     "Id": "{D5CB47BE-FC79-4B4A-B6B8-05C077BD9502}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ланч Большой",
+     "Code": "57",
+     "Id": "{B1E02C0F-B894-4357-9DD5-29333BE85894}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ролл Филадельфия",
+     "Code": "34",
+     "Id": "{7A6DD306-DC22-4E6A-A16C-746ED7ADF441}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ролл Калифорния",
+     "Code": "888",
+     "Id": "{A5847033-60B8-4BA4-84D4-4A89C8558161}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Подарок Ролл Калифорния",
+     "Code": "23",
+     "Id": "{433687DC-B2C8-44ED-B2B6-794F6AF92AC7}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Подарок Вино",
+     "Code": "25",
+     "Id": "{B6672088-CA50-46B2-9C02-2D6E4EECD180}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Coca Cola",
+     "Code": "37",
+     "Id": "{9F482A36-C35E-41CC-A096-41A929020BB7}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ролл Сливочный",
+     "Code": "38",
+     "Id": "{0BFAA892-C852-4048-AB91-9DAAC0CBEF98}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ролл Вегетарианский",
+     "Code": "39",
+     "Id": "{DFDA0CAC-D9AF-446C-892D-52E89F2D0A9B}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ролл Цезарь",
+     "Code": "40",
+     "Id": "{06FE6AA6-08F3-4938-8085-F9F4CD55F33C}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Борщ",
+     "Code": "48",
+     "Id": "{93B10ED9-01FF-448E-A003-C5E9CEA3F9E2}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Сырный суп",
+     "Code": "49",
+     "Id": "{7212812E-C043-49A3-A10F-CBC57729005A}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Окрошка",
+     "Code": "50",
+     "Id": "{9B2DF9CC-D129-484B-911A-A073FB21644C}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Щи",
+     "Code": "51",
+     "Id": "{F4FF45FF-6414-4397-99B5-3E4CCDA5F178}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с капустой",
+     "Code": "52",
+     "Id": "{D0DBA847-6E0D-4B27-8704-F57E4475852E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с яблоком",
+     "Code": "53",
+     "Id": "{C4D2FBDD-8D87-49F3-A1ED-F919ED0353B9}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с вишней",
+     "Code": "54",
+     "Id": "{29CEA1EB-8ADA-470B-8562-57547A8BC771}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с картошкой",
+     "Code": "58",
+     "Id": "{20FFFB82-4C74-43B5-ADBD-1F1AB08373D0}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с творогом",
+     "Code": "62",
+     "Id": "{86157411-1BDC-4E93-A6AD-B3B4B996F08D}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с сыром",
+     "Code": "63",
+     "Id": "{6340A959-124D-4460-9C70-5505B58DBF07}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с луком",
+     "Code": "64",
+     "Id": "{9B217B21-E5B5-422F-A693-959A94C35079}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с мясом",
+     "Code": "65",
+     "Id": "{3321CE59-BE21-40B2-A89D-3E02B9B37CE4}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирог с грибами",
+     "Code": "66",
+     "Id": "{85C36AD2-30C3-499D-8C0C-72393DDC9B09}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Торт морковный",
+     "Code": "67",
+     "Id": "{961A6E04-E49F-4003-BCA8-D9202E3B667C}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Торт сметанный",
+     "Code": "68",
+     "Id": "{1FC8CD4C-A9A2-44C9-A107-5A2D94AC7B58}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Торт Наполеон",
+     "Code": "69",
+     "Id": "{D7467E6B-7BF8-49DF-A49E-F5DAA64E6A5A}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Сметанник Фокина",
+     "Code": "70",
+     "Id": "{36146B64-B36C-4DD8-B764-BEF4D814F08E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Розетка с клубникой",
+     "Code": "71",
+     "Id": "{7C55FDB0-AA7D-41F8-B466-F59226F2E409}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Графские развалины",
+     "Code": "72",
+     "Id": "{2CC63236-0210-4EC8-9AF3-4EB0DACFC3FC}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Розетка с вишней",
+     "Code": "73",
+     "Id": "{F7CE3E95-7271-4DCD-8357-70D86CD3A8E8}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирожное Муравейник",
+     "Code": "74",
+     "Id": "{AEDBD764-109B-4917-9C65-3F6155F77E95}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Пирожное Медовое",
+     "Code": "75",
+     "Id": "{772D67FD-8328-4288-9F76-80B5ABDAD4DA}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Шашлык свиной",
+     "Code": "76",
+     "Id": "{4EF10504-3223-4110-8A1F-037849877251}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Шашлык из баранины",
+     "Code": "55",
+     "Id": "{9D67DE16-63E3-4536-9F72-369E4E0E0B29}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Вино",
+     "Code": "78",
+     "Id": "{07C94685-5D23-4565-A043-4A83AD91741F}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Вино белое",
+     "Code": "79",
+     "Id": "{C8B7159E-619A-422D-A27B-47546BCF2FA6}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Ред Маньяк",
+     "Code": "84",
+     "Id": "{189B4C9D-9DF3-4623-AC72-2082C5B68875}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Солти дог",
+     "Code": "85",
+     "Id": "{804A0DBC-19DA-485E-845F-49D055CE1802}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Гавайский бургер",
+     "Code": "131",
+     "Id": "{841DB274-7600-4255-A8D6-D0C5C73CBF68}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Мексиканский бургер",
+     "Code": "87",
+     "Id": "{D3B952FE-53B4-4D65-BAE0-CC92219E5070}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Бастурма",
+     "Code": "88",
+     "Id": "{DDE81172-8ACC-485C-9323-A3E46A27E8D6}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Гренки",
+     "Code": "89",
+     "Id": "{2CC18EF1-6719-4F50-B034-17B764724224}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Чай",
+     "Code": "91",
+     "Id": "{24B2DBB5-7B11-49C0-BFB2-6CB863E3D6DA}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Кофе",
+     "Code": "92",
+     "Id": "{20AB5EB2-7289-4238-82EF-9530BBC6F3A6}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Американо",
+     "Code": "104",
+     "Id": "{81307298-D8A9-4DA6-8DC7-F3B47499CB4B}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Латте",
+     "Code": "105",
+     "Id": "{67630D31-1BAB-47EB-892C-D75F289BAC4E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Эспрессо",
+     "Code": "106",
+     "Id": "{17DABB91-C314-4C73-A2FC-F244419CB17A}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Sprite",
+     "Code": "108",
+     "Id": "{CFB9358C-3BA6-4DCF-8806-2D4CD29E1276}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Fanta",
+     "Code": "109",
+     "Id": "{927EAE7D-097B-470D-9521-E269558E04A8}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Чай с бергамотом",
+     "Code": "110",
+     "Id": "{1BE67CBD-E7B3-4CB2-B01B-27866C6338A3}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Чай черный",
+     "Code": "111",
+     "Id": "{174B8B09-F798-4800-B2E3-79E6422D0FB7}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Чай зеленый",
+     "Code": "112",
+     "Id": "{6D5699DF-CCFA-450B-8518-2A61A231B139}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Предоплата",
+     "Code": "1585",
+     "Id": "{90709330-F4AE-4745-BCA9-ACE2A5038115}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "ОБСЛУЖИВАНИЕ 70%",
+     "Code": "666",
+     "Id": "{A406341B-C0DC-4DFF-85D1-5389E4F25A3A}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "CRM карты",
+     "Code": "11111",
+     "Id": "{7A72DAEF-56DC-4DE8-A57D-99C60839A4C9}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Наценка 10 процов",
+     "Code": "11232",
+     "Id": "{481C118D-5264-43CE-96D2-2B4859D443C1}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Сдача на депозит",
+     "Code": "140",
+     "Id": "{3629D3E6-31DA-41C1-AE02-777F9582ECD6}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Наценка Plazius",
+     "Code": "86",
+     "Id": "{FDD6C2F5-C96D-4AC7-9B3B-9D68BEB2A671}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "ТЕСТ КУХНЯ",
+     "Code": "134",
+     "Id": "{7FC9BCB4-BCF4-49FC-B167-6AA519ECB74C}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "ТЕСТ БАР",
+     "Code": "135",
+     "Id": "{FB2C832A-0F85-4676-A1F7-CDDBCF5B5B4E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Американо",
+     "Code": "940",
+     "Id": "{C38EEB81-36E8-4283-8F86-FCB1ED687AFE}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Капучино",
+     "Code": "943",
+     "Id": "{C95F69B4-CAD0-4B65-BC9B-571F8D8CFE09}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Латте",
+     "Code": "945",
+     "Id": "{EDD5DCA2-A2D6-4F1D-B7B5-BCE1D613CF5D}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Эспрессо",
+     "Code": "946",
+     "Id": "{40D6A33A-73BC-4487-A329-40B0CA247E2E}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Американо с молоком",
+     "Code": "941",
+     "Id": "{D0FB117D-B4CD-45DE-BFEB-23C0B1D97AA8}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Флэт Уайт",
+     "Code": "1484",
+     "Id": "{C39CDD61-5C4D-4B13-978F-1FF026D278FA}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Нулевая цена",
+     "Code": "153",
+     "Id": "{3455BF11-A430-4560-9D89-AE54C3D734AF}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Нулевая цена 2",
+     "Code": "154",
+     "Id": "{E31297B1-28D4-483C-9944-6D8C9AA3C8C2}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "1тест",
+     "Code": "116",
+     "Id": "{779AA9A4-F93E-455F-B359-2F8D54D3DA83}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "2тест",
+     "Code": "118",
+     "Id": "{4898D4C2-62E6-406E-9E4A-B9606DBFAE53}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "3тест",
+     "Code": "119",
+     "Id": "{77D1C402-6BD4-42AF-85BE-41678D5B2B25}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "4тест",
+     "Code": "120",
+     "Id": "{9EBE9D73-261A-42BE-90EC-51EF16D7E35C}"
+    },
+    {
+     "Price": "",
+     "Type": "Dish",
+     "Name": "Зарядное устройство",
+     "Code": "117",
+     "Id": "{B84B3584-8D47-4975-92C6-72185D67696A}"
+    }
+   ]
+  ]
+ }
+}

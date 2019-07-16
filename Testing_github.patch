@@ -1,0 +1,13 @@
+Index: tables_info.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- tables_info.py	(revision 4c21076f0d11b5d76208b7f820a404984f3f5e67)
++++ tables_info.py	(date 1563272619547)
+@@ -292,3 +292,4 @@
+ # json_write(output)
+ 
+ logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
++# This is just for testing
+\ No newline at end of file
