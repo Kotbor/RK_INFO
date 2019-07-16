@@ -304,4 +304,4 @@ while True:
             logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
 
 logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
-# This is just for testing
+# This is just for testing testing fresh at 15:10
