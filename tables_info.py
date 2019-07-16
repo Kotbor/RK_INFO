@@ -261,12 +261,13 @@ while True:
             all_dishes = [x.attrib for x in child.find('CheckLines').findall('CheckLine')]
             Dish = []
             for Name in all_dishes:
-                Dish.append({'CodeDish': Name['Code'], 'NameDish': Name['Name'], 'PriceDish': Name['Price']})
-                for N in itemsAttribs:
-                    if Name['Code'] == N['Code']:
-                        myItem = RequestMenu(Name['Code'])
-                        myItem = myItem['GUIDString']
-                        Dish.append({'Guid': myItem})
+                Dish.append({'CodeDish': Name['Code'], 'NameDish': Name['Name'], 'PriceDish': Name['Price'],
+                             'Guid':RequestMenu(Name['Code'])['GUIDString']})
+                #for N in itemsAttribs:
+                #    if Name['Code'] == N['Code']:
+                #        myItem = RequestMenu(Name['Code'])
+                #        myItem = myItem['GUIDString']
+                #        Dish.append({'Guid': myItem})
 
             output = json.dumps(Dish, ensure_ascii=False, indent=1)
             json_write_w(output)
