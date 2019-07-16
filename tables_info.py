@@ -292,3 +292,4 @@ while True:
 # json_write(output)
 
 logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+# This is just for testing
