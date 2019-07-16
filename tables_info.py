@@ -57,10 +57,9 @@ print('')
 #                        HighLevelGroup1 text, HighLevelGroup2 text, HighLevelGroup3 text, HighLevelGroup4 text,
 #                        BarCodesText text, BarcodesFullInfo text, ItemKind text)
 #                    """)
-
-############write_func############
-
-##########функция записи в json##########
+#      cursor.execute("""CREATE TABLE prices (Ident text, ItemIdent text,
+#                        SourceIdent text, GUIDString text, ObjectID text, Species text,
+#                        PriceType text, Modifiers text, Value text)""")
 
 def recvall():
     BUFF_SIZE = 2048  # 4 KiB
@@ -75,7 +74,7 @@ def recvall():
             break
     return data
 
-
+##########функция записи в json##########
 def json_write_w(out):
     with open('zakaz.json', 'w', encoding="utf-8") as file:
         file.write('%s\n' % out)
@@ -92,28 +91,34 @@ def CashPlansToSql():
     xml2 = open('halls.xml', 'r')
     xml3 = open('cashes.xml', 'r')
     xml4 = open('items.xml', 'r')
+    xml5 = open('prices.xml', 'r')
     xml_1 = xml1.read()
     xml_2 = xml2.read()
     xml_3 = xml3.read()
     xml_4 = xml4.read()
+    xml_5 = xml5.read()
     xml1.close()
     xml2.close()
     xml3.close()
     xml4.close()
+    xml5.close()
     host = 'https://192.168.0.188:16387/rk7api/v0/xmlinterface.xml'
     MenuItem1 = requests.post(host, verify=False, data=xml_1, headers=headers, auth=('HTTP', '1')).text
     MenuItem2 = requests.post(host, verify=False, data=xml_2, headers=headers, auth=('HTTP', '1')).text
     MenuItem3 = requests.post(host, verify=False, data=xml_3, headers=headers, auth=('HTTP', '1')).text
     MenuItem4 = requests.post(host, verify=False, data=xml_4, headers=headers, auth=('HTTP', '1')).text
+    MenuItem5 = requests.post(host, verify=False, data=xml_5, headers=headers, auth=('HTTP', '1')).text
     root1 = ET.fromstring(MenuItem1)
     root2 = ET.fromstring(MenuItem2)
     root3 = ET.fromstring(MenuItem3)
     root4 = ET.fromstring(MenuItem4)
-    global cashes, all_tables, all_halls, itemsAttribs
+    root5 = ET.fromstring(MenuItem5)
+    global cashes, all_tables, all_halls, itemsAttribs, prices
     itemsAttribs = [x.attrib for x in root4.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #элементы меню
     cashes = [x.attrib for x in root3.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все кассы(тут берём инфу по станции, её ID  и ID плана зала)
     all_tables = [x.attrib for x in root1.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все столы(тут имя стола, его Guid и ID плана зала)
     all_halls = [x.attrib for x in root2.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все планы залов(ID)
+    prices = [x.attrib for x in root5.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]
     clear = "DELETE FROM hall"
     cursor.execute(clear)
     clear2 = "DELETE FROM hallplans"
@@ -122,6 +127,8 @@ def CashPlansToSql():
     cursor.execute(clear3)
     clear4 = "DELETE FROM menuitems"
     cursor.execute(clear4)
+    clear5 = "DELETE FROM prices"
+    cursor.execute(clear5)
     conn.commit()
     for attrib in cashes:
         toSql = str(list(attrib.values()))# Преобразуем список значений словаря в строку - так надо для записи в SQL
@@ -139,7 +146,11 @@ def CashPlansToSql():
         toSql = str(list(attrib.values()))
         toSql = re.sub(r'\[|\]', '', toSql)
         cursor.execute('''INSERT INTO menuitems VALUES (''' + toSql + ''' )''')
-        conn.commit()
+    for attrib in prices:
+        if list(attrib.values())[6] == '3' and list(attrib.values())[5] == 'psDish': #price type
+            toSql = str(list(attrib.values()))
+            toSql = re.sub(r'\[|\]', '', toSql)
+            cursor.execute('''INSERT INTO prices VALUES (''' + toSql + ''' )''')
     conn.commit()
 
 ##############получаем план зала, столы и guid#################
@@ -172,7 +183,7 @@ def RequestMenu(cod):
 
     tables = cursor.fetchall()
     #dish = dict(zip(rownames, dishdetails))
-    return tables
+#    return tables
 
     dishdetails = cursor.fetchone()
     dish = dict(zip(rownames, dishdetails))
@@ -182,17 +193,26 @@ def RequestMenu(cod):
 def RequestAllMenu():
     products=[]
     logging.info('Start func ' + ' RequestAllMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
-    dishRequestByCode = "SELECT GUIDString, Name, Code FROM menuitems WHERE Status='rsActive'"
+    #dishRequestByCode = "SELECT GUIDString, Name, Code FROM menuitems WHERE Status='rsActive'"
+    dishRequestByCode = ("""SELECT m.Ident, m.GUIDString, m.Code, m.Name, p.Value as Price
+                            FROM menuitems m
+                            INNER JOIN prices p ON m.ItemIdent = p.ObjectID
+                            WHERE m.Status='rsActive'""")
     cursor.execute(dishRequestByCode) # Запрашиваем все элементы блюда с определённым кодом
-    #rownames = list(map(lambda x: x[0], cursor.description))
+    rownames = list(map(lambda x: x[0], cursor.description))
 
-    # dishes = cursor.fetchall()
-    # dish = dict(zip(rownames, dishdetails))
-    # return tables
+#    tables = cursor.fetchall()
+#    return tables
+
+    dishdetails = cursor.fetchone()
+#    dish = dict(zip(rownames, dishdetails))
+    logging.info('End func ' + ' RequestMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
+#    return dish
 
     dishdetails = cursor.fetchall()
     for item in dishdetails:
-        products.append({'Price':'','Type':'Dish','Name':item[1],'Code':item[2],'Id':item[0]})
+        price = str(int(item[4]) / 100)
+        products.append({'Price':price,'Type':'Dish','Name':item[3],'Code':item[2],'Id':item[1]})
     #dish = dict(zip(rownames, dishdetails))
     logging.info('End func ' + ' RequestAllMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
     return products
@@ -202,16 +222,21 @@ def RequestAllMenu():
 # ----------------------------------- Main Loop --------------------------------------
 try:
     sock = socket.socket()
-    sock.bind(('127.0.0.1', 16385))  # Слушаем на всех интерфейсах нужный порт, указанный в конфиге
+    sock.bind(('127.0.0.1', 16389))  # Слушаем на всех интерфейсах нужный порт, указанный в конфиге
     print('Сервер запущен')
 except:
     logging.debug("WARNING! Something already stolen this Cash_Port, choose another one. Exiting!")
     print('Не могу запустить сервер')
     sys.exit()
 
+CashPlansToSql()
+dish_code = 60
 id_hall = 1003563
+GUID = RequestMenu(dish_code)
+myItem = (GUID['GUIDString'])
 myHallPlans = RequestNameInHall(id_hall)
 menuItems = RequestAllMenu()
+
 output = {"Sections":[myHallPlans]}
 menu = {'Groups':'','ProductCategories':'','Products':[menuItems]}
 output['Menu']=menu
@@ -277,19 +302,6 @@ while True:
             output = json.dumps(output, ensure_ascii=False, indent=1)
             json_write_w(output)
             logging.info('End func ' + child.tag + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
-
-#init()
-#
-# code_dish = 50
-# CashPlansToSql()
-#
-# myItem = RequestMenu(code_dish)
-# myItem = (myItem['Name'], myItem['GUIDString'])
-# print(myItem, '\n', myHallPlans)
-# output = json.dumps(myItem, ensure_ascii=False, indent=1)
-# json_write(output)
-# output = json.dumps(myHallPlans, ensure_ascii=False, indent=1)
-# json_write(output)
 
 logging.info('End programm in: ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
 # This is just for testing
