@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Index</title>
+    <link href="static/jquery.searchableSelect.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="static/bootstrap.min.css">
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery-1.11.1.min.js"></script>
+    <script src="static/jquery.searchableSelect.js"></script>
+</head>
+<br><br><br><br>
+<body>
+    <!--<form class="form-inline" method="POST" action="{{ url_for('store') }}">-->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+            <div class="card">
+                <h5 class="card-header text-center col">Выбранный элемент </h5>
+                <div class="card-body">
+                    <h5 class="card-title"></h5>
+                    <h6 class="card-subtitle">Название:</h6>
+                    <p class="selected_item_Name ">{{nowSelectedItem.Name}}</p>
+                    <h6 class="card-subtitle">Ident:</h6>
+                    <p class="selected_item_Ident ">{{nowSelectedItem.Ident}}</p>
+                    <h6 class="card-subtitle">GUID:</h6>
+                    <p class="selected_item_Guid ">{{nowSelectedItem.GUID}}</p>
+                </div>
+            </div>
+        </div>
+        </div>
+        <br>
+
+        <div class="form-group">
+
+            <div class="input-group ">
+                <span class="input-group-addon"></span>
+                    <select name="comp_select" class="selectpicker form-control col">
+                    {% for item in menuList %}
+                        <option class="col-12" value={{item.GUID}}>{{item.Name}}</option>
+                    {% endfor %}
+                    </select>
+                <div class="col-3 mx-auto">
+                 <button type="submit" class="btn btn-info col-12">Сохранить</button>
+                    </div>
+            </div>
+
+          </div>
+     </div>
+    <!--</form>-->
+<script>$(function(){$('select').searchableSelect();});</script>
+<script>
+$(document).ready(function(){
+    var clicked;
+    $(".btn").click(function(){
+        clicked = $('select').val();
+        $.post('{{url_for('store')}}',{
+          data:clicked
+          }).done(function(response){
+          $(".selected_item_Name").text(response['data']['Name']);
+          $(".selected_item_Ident").text(response['data']['Ident']);
+          $(".selected_item_Guid").text(response['data']['GUID']);
+          })
+    });
+    });
+</script>
+</body>
+</html>
