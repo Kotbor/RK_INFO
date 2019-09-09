@@ -23,7 +23,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING) # Прогоняем debu
 
 logger = logging.getLogger('my_logger')
 
-handler = RotatingFileHandler('sender.log', maxBytes=2000, backupCount=10)
+handler = RotatingFileHandler('sender.log', maxBytes=2000000, backupCount=10)
 logger.addHandler(handler)
 
 
@@ -31,12 +31,17 @@ logger.addHandler(handler)
 config = configparser.ConfigParser()
 config.read('VideoSender.cfg')
 try:
-    VideoServer = config['Settings']['VideoServer']
-    ListenPort = config['Settings']['ListenPort']
-    ListenIP = config['Settings']['ListenIP']
-    XMLInterface = config['Settings']['XMLInterface']
-    GUIDInterface = config['Settings']['GUIDInterface']
-    LogLevel = int(config['Settings']['LogLevel'])
+    VideoServer = config['Settings']['videoserver']
+    ListenPort = config['Settings']['listenport']
+    ListenIP = config['Settings']['listenip']
+    XMLInterface = config['Settings']['xmlinterface']
+    GUIDInterface = config['Settings']['guidinterface']
+    try:
+        LogLevel = int(config['Settings']['loglevel'])
+    except:
+        logger.critical('No loglevel in config, using CRITICAL')
+        LogLevel = 0
+
 except Exception as e:
     logger.critical(str(e))
     logger.critical('Config file is missing or incorrect?')
@@ -278,10 +283,28 @@ def info_station():
         logger.critical(e)
 
 # -----------------------------события для SocketIO-----------------------------------
+def connector():
+    global connected
+    if 'connected' not in globals():
+        connected = False
+    while connected == False:
+        try:
+            sio.connect(VideoServer)
+            sio.sleep(3)
+            sio.call('authentication', authObject)
+            sio.sleep(3)
+        except Exception as e:
+            logger.debug('No connection to sio sever %s' % e)
+            sio.disconnect()
+            sio.sleep(7)
+
+
 @sio.event
 def connect():
-    logger.debug('connection established')
     global firstConnection
+    global connected
+    logger.debug('connection established')
+    connected = True
     if firstConnection == True:
         authObject['IsCashServer'] = True
         firstConnection = False
@@ -292,26 +315,31 @@ def connect():
 @sio.event
 def authenticated(data):
     global connected
-    logger.debug('R-Keeper backup server Plugin authenticated', data)
+    logger.debug('R-Keeper backup server Plugin authenticated')
     connected = True
 
 @sio.event
 def responseOrder(data):
     global success
-    logger.debug('responseOrder', data)
+    logger.debug('responseOrder')
     success = True
 
 @sio.event
 def auth_confirmation(data):
-    logger.debug('auth_confirmation', data)
+    logger.debug('auth_confirmation')
 
 @sio.event
 def authentication_error(data):
-    logger.debug('authentication_error', data)
+    logger.debug('authentication_error')
 
 @sio.event
 def disconnect():
+    global connected
+    connected = False
     logger.debug('R-Keeper has been disconnected')
+    sio.disconnect()
+    time.sleep (5)
+
     '''
     global connected
     connected = False
@@ -325,24 +353,51 @@ def disconnect():
             logger.debug("Can't reconnect to SIO")
             connected = True
     '''
-def sendOrder(contents): # Sending order every 5 seconds, while "responceOrder" received
-    global success
-    success = False
-    contents = json.loads(contents)
-    count = 0
-    while success == False:
-        count +=1
-        try:
-            sio.emit('posOrder', contents)
-            logger.debug('posOrder sent to sio, try №%s' % count)
-            sio.sleep(5)
-        except:
-            logger.debug('Failed to emit posOrder')
-        finally:
-            if count>=5:
-                success=True
-
+#
+# def sendOrder(contents): # Sending order every 5 seconds, while "responceOrder" received
+#     global success
+#     success = False
+#     contents = json.loads(contents)
+#     count = 0
+#     while success == False:
+#         count +=1
+#         try:
+#             sio.emit('posOrder', contents)
+#             logger.debug('posOrder sent to sio, try №%s' % count)
+#             sio.sleep(3)
+#             if count > 3:
+#                 sio.disconnect()
+#                 time.sleep(10)
+#                 connector()
+#
+#         except:
+#             logger.debug('Failed to emit posOrder')
+#         finally:
+#             if count>=5:
+#                 success=True
+#
         #success = True
+
+
+def sendOrder(contents): # Sending order every 10 seconds, while "responceOrder" received
+    global success
+    global connected
+    success = False
+    if connected ==True:
+        while success == False:
+            #connector()
+            sio.call('posOrder', contents)
+            sio.sleep(2)
+    else:
+        print ('Something wrong, reconnecting')
+        connector()
+        while success == False:
+            #connector()
+            sio.call('posOrder', contents)
+            sio.sleep(10)
+
+
+
 # ----------------------------------- Main Loop --------------------------------------
 try:
     sock = socket.socket()
@@ -361,11 +416,15 @@ except:
 status = False #используется для того чтобы каждый раз не переписывать order_full при login
 logger.info('MainLoop Started.')
 while True:
-    data = '<body>\n'
-    dat2 = recvall()
-    dat2 = dat2.decode()
-    data += str(dat2)
-    data += '\n</body>'
+    try:
+        data = '<body>\n'
+        dat2 = recvall()
+        dat2 = dat2.decode()
+        data += str(dat2)
+        data += '\n</body>'
+    except:
+        logger.critical('Can not convert RK data to string, may be wrong encoding')
+        data =''
     try:
         root = ET.fromstring(data)
     except:
@@ -378,8 +437,7 @@ while True:
         if child.tag == 'LogIn':  # Login посылается всего один раз. Передаются планы залов, столы и меню
             if status == False:
                 authObject = info_station()# Получаем authObject
-                sio.connect(VideoServer)
-                sio.emit('authentication', authObject)
+                connector()
                 status = True
                 logger.debug('Starting connection to SIO')
         if child.tag == 'NewOrder':
@@ -394,10 +452,17 @@ while True:
                     'Id': re.sub(r'\{|\}', '', child.attrib['WaiterGuid'])
                 }
                 Tables = []
-                Table = {
-                    'Number': child.attrib['TableName'],
-                    'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
-                }
+                try:
+                    Table = {
+                        'Number': int(child.attrib['TableName']),
+                        'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
+                    }
+                except:
+                    logger.critical('Table %s is not Integer value!!' % child.attrib['TableName'])
+                    Table = {
+                        'Number': child.attrib['TableName'],
+                        'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
+                    }
                 Tables.append(Table)
                 Products = []
                 for x in all_items:
@@ -473,10 +538,17 @@ while True:
                     'Id': re.sub(r'\{|\}', '', child.attrib['WaiterGuid'])
                 }
                 Tables = []
-                Table = {
-                    'Number': child.attrib['TableName'],
-                    'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
-                }
+                try:
+                    Table = {
+                        'Number': int(child.attrib['TableName']),
+                        'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
+                    }
+                except:
+                    logger.critical('Table %s is not Integer value!!' % child.attrib['TableName'])
+                    Table = {
+                        'Number': child.attrib['TableName'],
+                        'Id': re.sub(r'\{|\}', '', child.attrib['TableGuid'])
+                    }
                 Tables.append(Table)
                 Products = []
                 for x in all_items:
