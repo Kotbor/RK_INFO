@@ -61,9 +61,9 @@ if LogLevel == 1:
 elif LogLevel == 0:
     logger.setLevel(logging.CRITICAL)
 
-ProductGUID = config['Settings']['guid'] # Забираем guid из cfg
+ProductGUID = config['Settings']['guid'] #  Забираем guid из cfg
 
-sio = socketio.Client(logger=True)
+sio = socketio.Client(logger=True,engineio_logger=True)
 firstConnection = True # При первом подключении передаём authobject
 success = False # Отслеживаем успешный ответ
 
@@ -93,6 +93,10 @@ def recvall():
         length = len(part)
         if length < BUFF_SIZE:
             break
+    try:
+        logger.debug(data.decode())
+    except:
+        logger.debug('!!!!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
     return data
 # ##########запись общей информации##########
 # def json_write_w(out): #перезаписываем файл
@@ -291,7 +295,7 @@ def connector():
         try:
             sio.connect(VideoServer)
             sio.sleep(3)
-            sio.call('authentication', authObject)
+            sio.emit('authentication', authObject)
             sio.sleep(3)
         except Exception as e:
             logger.debug('No connection to sio sever %s' % e)
@@ -379,22 +383,23 @@ def disconnect():
         #success = True
 
 
-def sendOrder(contents): # Sending order every 10 seconds, while "responceOrder" received
+def sendOrder(contents): # Sending order every 2 seconds, while "responceOrder" received
     global success
     global connected
     success = False
+    contents = json.loads(contents)
     if connected ==True:
         while success == False:
             #connector()
-            sio.call('posOrder', contents)
+            sio.emit('posOrder', contents)
             sio.sleep(2)
     else:
         print ('Something wrong, reconnecting')
         connector()
         while success == False:
             #connector()
-            sio.call('posOrder', contents)
-            sio.sleep(10)
+            sio.emit('posOrder', contents)
+            sio.sleep(2)
 
 
 
@@ -422,16 +427,21 @@ while True:
         dat2 = dat2.decode()
         data += str(dat2)
         data += '\n</body>'
-    except:
+
+
+    except Exception as e:
         logger.critical('Can not convert RK data to string, may be wrong encoding')
+        logger.debug(e)
         data =''
     try:
         root = ET.fromstring(data)
-    except:
+    except Exception as e:
         root = ''
-    logger.debug('=======================Raw data begin========================')
-    logger.debug(data)
-    logger.debug('=======================Raw data end==========================')
+        logger.debug("!!!!!!!!!!!!Can't parse xml!!!!!!!!!!!!!!")
+        logger.debug(e)
+    #logger.debug('=======================Raw data begin========================')
+    #logger.debug(data)
+    #logger.debug('=======================Raw data end==========================')
     for child in root:
         inside = child.attrib
         if child.tag == 'LogIn':  # Login посылается всего один раз. Передаются планы залов, столы и меню
@@ -481,7 +491,7 @@ while True:
                         "Comment": "",
                         'Deleted': Deleted,
                         "DeletionMethod": None,
-                        'PrintTime': DtimeConvert(),
+                        'PrintTime':OrdertimeConvert(x.find('Packet').attrib['WasPrinted']),
                         "ServeTime": None,
                         "Modifiers": []
                     }
@@ -557,6 +567,8 @@ while True:
                         Deleted = True
                     else:
                         Deleted = False
+                    #print_time = randomOrder['Order']['Guests'][0]['Products'][0]['PrintTime'] # for New table
+                    print_time = OrdertimeConvert(x.find('Packet').attrib['WasPrinted'])
                     Product = {
                         'Id': str(uuid.uuid4()),
                         'ProductId': re.sub(r'\{|\}', '', x.attrib['Guid']),
@@ -567,7 +579,7 @@ while True:
                         "Comment": "",
                         'Deleted': Deleted,
                         "DeletionMethod": None,
-                        'PrintTime': DtimeConvert(),
+                        'PrintTime': print_time,
                         "ServeTime": None,
                         "Modifiers": []
                     }

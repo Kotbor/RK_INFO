@@ -1,7 +1,7 @@
 import eventlet
 import socketio
 
-sio = socketio.Server()
+sio = socketio.Server(logger=True)
 app = socketio.WSGIApp(sio, static_files={
     '/': {'content_type': 'text/html', 'filename': 'index.html'}
 })
@@ -29,4 +29,4 @@ def authentication(sid,data):
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
+    eventlet.wsgi.server(eventlet.listen(('', 5500)), app)
