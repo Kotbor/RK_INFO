@@ -15,18 +15,18 @@ import socketio
 from datetime import datetime
 import configparser
 import sqlite3
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from threading import Thread
+
 
 
 ##############logging#############
 #logging.basicConfig(filename='sender.log', level=logging.DEBUG) #настраиваем логирование
 logging.getLogger("urllib3").setLevel(logging.WARNING) # Прогоняем debug сообщения от urllib
-
 logger = logging.getLogger('my_logger')
-
-handler = RotatingFileHandler('sender.log', maxBytes=2000000, backupCount=10)
-logger.addHandler(handler)
-
-
+logging.basicConfig(handlers=[RotatingFileHandler('RkeeperInfo.log', maxBytes=2000000, backupCount=10)],
+                    format = u'[%(asctime)s] %(levelname)s %(message)s')
 #-------------------------------------------- Config----------------------------------------------
 config = configparser.ConfigParser()
 config.read('VideoSender.cfg')
@@ -83,9 +83,9 @@ def init(tablename, labels):
 
 ##########указываем количество байт для чтения##########
 def recvall():
-    BUFF_SIZE = 2048  # 4 KiB
+    BUFF_SIZE = 1024  # 4 KiB
     data = b''
-    sock.listen(10)
+    sock.listen(30)
     conn, addr = sock.accept()
     while True:
         part = conn.recv(BUFF_SIZE)
@@ -98,14 +98,26 @@ def recvall():
     except:
         logger.debug('!!!!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
     return data
-# ##########запись общей информации##########
-# def json_write_w(out): #перезаписываем файл
-#     with open('order_full.json', 'w', encoding="utf-8") as file:
-#         file.write('%s\n' % out)
-# ##########запись информации о заказе##########
-# def json_write(out): #перезаписываем файл
-#     with open('order.json', 'w', encoding='utf-8') as file:
-#         file.write('%s\n' % out)
+
+
+
+############ Инициализируем хранилище запросов ###############
+toSend=[]
+
+def sender():
+    if len (toSend) > 0:
+        toSend2 = toSend
+        for i in toSend2:
+            print('Sending')
+            sendOrder(i)
+
+job_defaults = {
+    'coalesce': False,
+    'max_instances': 1
+}
+sched = BackgroundScheduler(daemon=True,job_defaults=job_defaults)
+sched.add_job(sender,IntervalTrigger(seconds=30))
+sched.start()
 
 ##########Читаем файл с XML запросом#########
 def CashPlansToSql():
@@ -280,23 +292,27 @@ def info_station():
         output['Menu'] = menu
         info = output
         output = json.dumps(output, ensure_ascii=False, indent=1)
-        #json_write_w(output)
         return info
     except Exception as e:
         logger.critical('Failed to get InfoStation')
         logger.critical(e)
 
 # -----------------------------события для SocketIO-----------------------------------
-def connector():
+def connector(limit):
     global connected
     if 'connected' not in globals():
         connected = False
     while connected == False:
+        limit -= 1
+        if limit < 0:
+            logger.critical("Dropped packed due to server inactivity")
+            break
         try:
             sio.connect(VideoServer)
             sio.sleep(3)
             sio.emit('authentication', authObject)
             sio.sleep(3)
+
         except Exception as e:
             logger.debug('No connection to sio sever %s' % e)
             sio.disconnect()
@@ -357,50 +373,29 @@ def disconnect():
             logger.debug("Can't reconnect to SIO")
             connected = True
     '''
-#
-# def sendOrder(contents): # Sending order every 5 seconds, while "responceOrder" received
-#     global success
-#     success = False
-#     contents = json.loads(contents)
-#     count = 0
-#     while success == False:
-#         count +=1
-#         try:
-#             sio.emit('posOrder', contents)
-#             logger.debug('posOrder sent to sio, try №%s' % count)
-#             sio.sleep(3)
-#             if count > 3:
-#                 sio.disconnect()
-#                 time.sleep(10)
-#                 connector()
-#
-#         except:
-#             logger.debug('Failed to emit posOrder')
-#         finally:
-#             if count>=5:
-#                 success=True
-#
-        #success = True
 
-
-def sendOrder(contents): # Sending order every 2 seconds, while "responceOrder" received
+def sendOrder(in_contents): # Sending order every 2 seconds, while "responceOrder" received
     global success
     global connected
     success = False
-    contents = json.loads(contents)
+    contents = json.loads(in_contents)
     if connected ==True:
         while success == False:
             #connector()
             sio.emit('posOrder', contents)
             sio.sleep(2)
+            if success == True:
+                toSend.remove(in_contents)
     else:
         print ('Something wrong, reconnecting')
-        connector()
+        trys = 5 # Количество попыток
+        connector(1)
         while success == False:
-            #connector()
+            trys -=1
             sio.emit('posOrder', contents)
             sio.sleep(2)
-
+            if trys <=0:
+                break
 
 
 # ----------------------------------- Main Loop --------------------------------------
@@ -439,15 +434,12 @@ while True:
         root = ''
         logger.debug("!!!!!!!!!!!!Can't parse xml!!!!!!!!!!!!!!")
         logger.debug(e)
-    #logger.debug('=======================Raw data begin========================')
-    #logger.debug(data)
-    #logger.debug('=======================Raw data end==========================')
     for child in root:
         inside = child.attrib
         if child.tag == 'LogIn':  # Login посылается всего один раз. Передаются планы залов, столы и меню
             if status == False:
                 authObject = info_station()# Получаем authObject
-                connector()
+                connector(1)
                 status = True
                 logger.debug('Starting connection to SIO')
         if child.tag == 'NewOrder':
@@ -528,9 +520,12 @@ while True:
                 }
                 if Product['Deleted'] == True: #если полностью удалён
                     output = json.dumps(randomOrder, ensure_ascii=False, indent=1)
-                    #json_write(output)
                     orderObject = output
-                    sendOrder(orderObject)
+                    #sendOrder(orderObject)
+                    if randomOrder['Order']['Guests'][0]['Products']:
+                        toSend.append(orderObject)  #
+                    else:
+                        logger.debug ('Order with other than choosen GUID')
             except Exception as e:
                 logger.critical('Failed parsing ScreenCheck')
                 logger.critical(e)
@@ -538,9 +533,12 @@ while True:
         if child.tag == 'StoreCheck':  # Сохранение заказа
             try:
                 output = json.dumps(randomOrder, ensure_ascii=False, indent=1)
-                #json_write(output)
                 orderObject = output
-                sendOrder(orderObject)
+                #sendOrder(orderObject)
+                if randomOrder['Order']['Guests'][0]['Products']:
+                    toSend.append(orderObject)
+                else:
+                    logger.debug('Order with other than choosen GUID')
                 ##############################
                 all_items = root[0].findall('CheckLines')[0].findall('CheckLine')
                 Waiter = {
@@ -567,7 +565,6 @@ while True:
                         Deleted = True
                     else:
                         Deleted = False
-                    #print_time = randomOrder['Order']['Guests'][0]['Products'][0]['PrintTime'] # for New table
                     print_time = OrdertimeConvert(x.find('Packet').attrib['WasPrinted'])
                     Product = {
                         'Id': str(uuid.uuid4()),
@@ -614,9 +611,8 @@ while True:
                     'Order': Order,
                     "Idempotency_key": None
                 }
-                if randomOrder['Order']['Tables'][0]['Number'] != randomOrder2['Order']['Tables'][0]['Number']: #сверяем столы по Id
+                if randomOrder['Order']['Id'] != randomOrder2['Order']['Id']:
                     output = json.dumps(randomOrder2, ensure_ascii=False, indent=1)
-                    #json_write(output)
                     orderObject = output
                     try:
                         logger.debug('========================OrderObject Begin==================')
@@ -624,7 +620,11 @@ while True:
                         logger.debug('========================OrderObject End====================')
                     except:
                         logger.debug("Can't write orderObject")
-                    sendOrder(orderObject)
+                    #sendOrder(orderObject)
+                    if randomOrder['Order']['Guests'][0]['Products']:
+                        toSend.append(orderObject)
+                    else:
+                        logger.debug ('Order with other than choosen GUID')
             except Exception as e:
                 logger.critical('Failed parsing StoreCheck')
                 logger.critical(e)
