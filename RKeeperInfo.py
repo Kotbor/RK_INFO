@@ -97,7 +97,7 @@ def recvall():
     try:
         logger.debug(data.decode())
     except:
-        logger.debug('!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
+        logger.debug('!!!!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
     return data
 
 
@@ -337,12 +337,12 @@ def RequestNameInHall(hall_ident):
     try:
         db = sqlite3.connect('rk_item.db')  # обращение к базе sqlite
         cursor = db.cursor()
-        dishRequestByCode2 = ("""SELECT t.NAME NAME, t.GUIDString GUID, hp.Name HALL_NAME 
-                                FROM hall h
-                                INNER JOIN hallplans hp ON h.DEFHALLPLANID = hp.Ident
-                                INNER JOIN tables t ON h.DEFHALLPLANID = t.HALL
-                                WHERE h.DEFHALLPLANID = ?""")
-        cursor.execute(dishRequestByCode2,(str(hall_ident),))
+        dishRequestByCode2 = ("""SELECT DISTINCT t.Code NAME, t.GUIDString GUID, hp.Name HALL_NAME
+                                    FROM tables t
+                                    LEFT JOIN hall h ON t.HALL = h.DEFHALLPLANID
+                                    LEFT JOIN hallplans hp ON hp.ItemIdent = t.HALL
+                                    WHERE t.Status = 'rsActive' and t.ActiveHierarchy = 'true'""")
+        cursor.execute(dishRequestByCode2)
         dishdetails = cursor.fetchall()
         global plans
         plans = []
