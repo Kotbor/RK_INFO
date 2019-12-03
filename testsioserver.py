@@ -25,8 +25,9 @@ def posOrder(sid,data):
 
 @sio.event
 def authentication(sid,data):
+    print('Authentication request: %s' % data)
     sio.emit('authenticated', data={})
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('', 5500)), app)
+    eventlet.wsgi.server(eventlet.listen(('', 5050)), app)

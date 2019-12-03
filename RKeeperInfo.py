@@ -30,6 +30,7 @@ logging.basicConfig(handlers=[RotatingFileHandler('RkeeperInfo.log', maxBytes=20
 #-------------------------------------------- Config----------------------------------------------
 config = configparser.ConfigParser()
 config.read('VideoSender.cfg')
+connected = False
 try:
     VideoServer = config['Settings']['videoserver']
     ListenPort = config['Settings']['listenport']
@@ -85,7 +86,7 @@ def init(tablename, labels):
 def recvall():
     BUFF_SIZE = 1024  # 4 KiB
     data = b''
-    sock.listen(30)
+    sock.listen(1)
     conn, addr = sock.accept()
     while True:
         part = conn.recv(BUFF_SIZE)
@@ -96,28 +97,143 @@ def recvall():
     try:
         logger.debug(data.decode())
     except:
-        logger.debug('!!!!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
+        logger.debug('!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
     return data
 
 
 
-############ Инициализируем хранилище запросов ###############
-toSend=[]
+
+
+
+
+
+# -----------------------------события для SocketIO-----------------------------------
+def connector(limit=1):
+    global connected
+    if 'connected' not in globals():
+        connected = False
+    while connected == False:
+        limit -= 1
+        if limit < 0:
+            logger.critical("Dropped packed due to server inactivity")
+            break
+        try:
+            sio.connect(VideoServer)
+            sio.sleep(3)
+            sio.emit('authentication', authObject)
+            sio.sleep(3)
+
+        except Exception as e:
+            logger.debug('No connection to sio sever %s' % e)
+            sio.disconnect()
+            sio.sleep(7)
+
+
+@sio.event
+def connect():
+    global firstConnection
+    global connected
+    logger.debug('connection established')
+    connected = True
+    if firstConnection == True:
+        #authObject = info_station() #######################    ToDo:  COMMENT ME !!!!!!!!!!!!!!!!!!!!!!
+        authObject['IsCashServer'] = True
+        firstConnection = False
+    else:
+        authObject['IsCashServer'] = 'False'
+        authObject['TerminalName'] = "R-Keeper_pos"
+
+@sio.event
+def authenticated(data):
+    global connected
+    logger.debug('R-Keeper backup server Plugin authenticated')
+    connected = True
+
+@sio.event
+def responseOrder(data):
+    global success
+    logger.debug('responseOrder')
+    success = True
+
+@sio.event
+def auth_confirmation(data):
+    logger.debug('auth_confirmation')
+
+@sio.event
+def authentication_error(data):
+    logger.debug('authentication_error')
+
+@sio.event
+def disconnect():
+    global connected
+    connected = False
+    logger.debug('R-Keeper has been disconnected')
+    sio.disconnect()
+    time.sleep (5)
+
+
+
+
+
+
+
+
+
+################################################################################################
+############################### Sending data scheduller ########################################
+################################################################################################
+def sendOrder(in_contents): # Sending order every 2 seconds, while "responceOrder" received
+    global success
+    global connected
+    success = False
+    contents = json.loads(in_contents)
+    if sio.connected ==True:
+        while success == False:
+            #connector()
+           sio.emit('posOrder', contents)
+           sio.sleep(2)
+           if success == True:
+                toSend.remove(in_contents)
+
+    else:
+        connected = False
+        print ('Something wrong, reconnecting')
+        trys = 5 # Количество попыток
+        connector(1)
+        while success == False:
+            trys -=1
+            sio.emit('posOrder', contents)
+            sio.sleep(2)
+            if trys <=0:
+                break
+
+toSend=[]  # This variable stores all checks than was not sent yet
 
 def sender():
     if len (toSend) > 0:
         toSend2 = toSend
         for i in toSend2:
-            print('Sending')
-            sendOrder(i)
+            try:
+                sendOrder(i)
+                logger.debug('Sending')
+            except Exception as e:
+                logger.critical("!!!!!!!!!!!!!!!Failed to Send %s !!!!!!!!!!!!!!!!!!!!" % (e))
+                toSend.remove(i)
+
 
 job_defaults = {
     'coalesce': False,
     'max_instances': 1
 }
 sched = BackgroundScheduler(daemon=True,job_defaults=job_defaults)
-sched.add_job(sender,IntervalTrigger(seconds=30))
+sched.add_job(sender,IntervalTrigger(seconds=30), id='autosender', replace_existing=True)
 sched.start()
+
+################################################################################################
+######################################End sending data scheduller###############################
+################################################################################################
+
+
 
 ##########Читаем файл с XML запросом#########
 def CashPlansToSql():
@@ -268,7 +384,7 @@ def DtimeConvert():
     return JavaDtime
 ##############конвертируем заданны формат даты#############
 def OrdertimeConvert(dtime):
-    OrderDtime = (datetime.strptime(dtime, '%d.%m.%Y %H:%M:%S')).strftime('%Y-%m-%dT%H:%M:%S.%f+03:00')
+    OrderDtime = (datetime.strptime(dtime, '%d.%m.%Y %H:%M:%S')).strftime('%Y-%m-%dT%H:%M:00.%f+03:00')
     return OrderDtime
 ###########получаем информацию о планах зала, столах и меню##########
 def info_station():
@@ -297,105 +413,6 @@ def info_station():
         logger.critical('Failed to get InfoStation')
         logger.critical(e)
 
-# -----------------------------события для SocketIO-----------------------------------
-def connector(limit):
-    global connected
-    if 'connected' not in globals():
-        connected = False
-    while connected == False:
-        limit -= 1
-        if limit < 0:
-            logger.critical("Dropped packed due to server inactivity")
-            break
-        try:
-            sio.connect(VideoServer)
-            sio.sleep(3)
-            sio.emit('authentication', authObject)
-            sio.sleep(3)
-
-        except Exception as e:
-            logger.debug('No connection to sio sever %s' % e)
-            sio.disconnect()
-            sio.sleep(7)
-
-
-@sio.event
-def connect():
-    global firstConnection
-    global connected
-    logger.debug('connection established')
-    connected = True
-    if firstConnection == True:
-        authObject['IsCashServer'] = True
-        firstConnection = False
-    else:
-        authObject['IsCashServer'] = 'False'
-        authObject['TerminalName'] = "R-Keeper_pos"
-
-@sio.event
-def authenticated(data):
-    global connected
-    logger.debug('R-Keeper backup server Plugin authenticated')
-    connected = True
-
-@sio.event
-def responseOrder(data):
-    global success
-    logger.debug('responseOrder')
-    success = True
-
-@sio.event
-def auth_confirmation(data):
-    logger.debug('auth_confirmation')
-
-@sio.event
-def authentication_error(data):
-    logger.debug('authentication_error')
-
-@sio.event
-def disconnect():
-    global connected
-    connected = False
-    logger.debug('R-Keeper has been disconnected')
-    sio.disconnect()
-    time.sleep (5)
-
-    '''
-    global connected
-    connected = False
-    trying = 5
-    while connected == False:
-        trying -= 1
-        sio.connect(VideoServer)
-        sio.emit('authentication', authObject)
-        sio.sleep(4)
-        if trying ==0: # Leaving after trying limit
-            logger.debug("Can't reconnect to SIO")
-            connected = True
-    '''
-
-def sendOrder(in_contents): # Sending order every 2 seconds, while "responceOrder" received
-    global success
-    global connected
-    success = False
-    contents = json.loads(in_contents)
-    if connected ==True:
-        while success == False:
-            #connector()
-            sio.emit('posOrder', contents)
-            sio.sleep(2)
-            if success == True:
-                toSend.remove(in_contents)
-    else:
-        print ('Something wrong, reconnecting')
-        trys = 5 # Количество попыток
-        connector(1)
-        while success == False:
-            trys -=1
-            sio.emit('posOrder', contents)
-            sio.sleep(2)
-            if trys <=0:
-                break
 
 
 # ----------------------------------- Main Loop --------------------------------------
