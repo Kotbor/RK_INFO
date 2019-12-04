@@ -19,7 +19,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from threading import Thread
 
-
+authObject = {} #######################    ToDo:  COMMENT ME !!!!!!!!!!!!!!!!!!!!!!
 
 ##############logging#############
 #logging.basicConfig(filename='sender.log', level=logging.DEBUG) #настраиваем логирование
@@ -136,12 +136,12 @@ def connect():
     logger.debug('connection established')
     connected = True
     if firstConnection == True:
-        #authObject = info_station() #######################    ToDo:  COMMENT ME !!!!!!!!!!!!!!!!!!!!!!
+
         authObject['IsCashServer'] = True
         firstConnection = False
     else:
-        authObject['IsCashServer'] = 'False'
-        authObject['TerminalName'] = "R-Keeper_pos"
+        authObject['IsCashServer'] = True
+#        authObject['TerminalName'] = "R-Keeper_pos"
 
 @sio.event
 def authenticated(data):
@@ -187,25 +187,30 @@ def sendOrder(in_contents): # Sending order every 2 seconds, while "responceOrde
     global connected
     success = False
     contents = json.loads(in_contents)
-    if sio.connected ==True:
-        while success == False:
-            #connector()
-           sio.emit('posOrder', contents)
-           sio.sleep(2)
-           if success == True:
-                toSend.remove(in_contents)
+    try:
+        if sio.connected ==True:
+            while success == False:
+                #connector()
+               sio.emit('posOrder', contents)
+               sio.sleep(2)
+               if success == True:
+                    toSend.remove(in_contents)
 
-    else:
-        connected = False
-        print ('Something wrong, reconnecting')
-        trys = 5 # Количество попыток
-        connector(1)
-        while success == False:
-            trys -=1
-            sio.emit('posOrder', contents)
-            sio.sleep(2)
-            if trys <=0:
-                break
+        else:
+            connected = False
+            print ('Something wrong, reconnecting')
+            trys = 5 # Количество попыток
+            connector(1)
+            while success == False:
+                trys -=1
+                sio.emit('posOrder', contents)
+                sio.sleep(2)
+                if trys <=0:
+                    break
+    except Exception as e:
+        logger.critical("ZZZZZZZZZZZZZZZZZZZZZZ Can't send order ZZZZZZZZZZZZZZZZZZZZ")
+        logger.critical(' %s ' % e)
+        logger.critical('ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ')
 
 toSend=[]  # This variable stores all checks than was not sent yet
 
@@ -226,7 +231,7 @@ job_defaults = {
     'max_instances': 1
 }
 sched = BackgroundScheduler(daemon=True,job_defaults=job_defaults)
-sched.add_job(sender,IntervalTrigger(seconds=30), id='autosender', replace_existing=True)
+sched.add_job(sender,IntervalTrigger(seconds=10), id='autosender', replace_existing=True)
 sched.start()
 
 ################################################################################################
