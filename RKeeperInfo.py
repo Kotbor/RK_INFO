@@ -19,15 +19,15 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from threading import Thread
 
-authObject = {} #######################    ToDo:  COMMENT ME !!!!!!!!!!!!!!!!!!!!!!
+authObject = {}  #######################    ToDo:  COMMENT ME !!!!!!!!!!!!!!!!!!!!!!
 
 ##############logging#############
-#logging.basicConfig(filename='sender.log', level=logging.DEBUG) #настраиваем логирование
-logging.getLogger("urllib3").setLevel(logging.WARNING) # Прогоняем debug сообщения от urllib
+# logging.basicConfig(filename='sender.log', level=logging.DEBUG) #настраиваем логирование
+logging.getLogger("urllib3").setLevel(logging.WARNING)  # Прогоняем debug сообщения от urllib
 logger = logging.getLogger('my_logger')
 logging.basicConfig(handlers=[RotatingFileHandler('RkeeperInfo.log', maxBytes=2000000, backupCount=10)],
-                    format = u'[%(asctime)s] %(levelname)s %(message)s')
-#-------------------------------------------- Config----------------------------------------------
+                    format=u'[%(asctime)s] %(levelname)s %(message)s')
+# -------------------------------------------- Config----------------------------------------------
 config = configparser.ConfigParser()
 config.read('VideoSender.cfg')
 connected = False
@@ -62,13 +62,11 @@ if LogLevel == 1:
 elif LogLevel == 0:
     logger.setLevel(logging.CRITICAL)
 
-ProductGUID = config['Settings']['guid'] #  Забираем guid из cfg
+ProductGUID = config['Settings']['guid']  # Забираем guid из cfg
 
-sio = socketio.Client(logger=True,engineio_logger=True)
-firstConnection = True # При первом подключении передаём authobject
-success = False # Отслеживаем успешный ответ
-
-
+sio = socketio.Client(logger=True, engineio_logger=True)
+firstConnection = True  # При первом подключении передаём authobject
+success = False  # Отслеживаем успешный ответ
 
 
 ############Создание талиц############
@@ -81,6 +79,7 @@ def init(tablename, labels):
         full_labels += x
     querytext = ('''CREATE TABLE %s (%s)''') % (tablename, full_labels[:-1])
     cursor.execute(querytext)
+
 
 ##########указываем количество байт для чтения##########
 def recvall():
@@ -99,12 +98,6 @@ def recvall():
     except:
         logger.debug('!!!!!!!!!!!!!!!!!!!!!Can not wtite xml to log!!!!!!!!!!!!!!!!!!')
     return data
-
-
-
-
-
-
 
 
 # -----------------------------события для SocketIO-----------------------------------
@@ -141,6 +134,8 @@ def connect():
         firstConnection = False
     else:
         authObject['IsCashServer'] = True
+
+
 #        authObject['TerminalName'] = "R-Keeper_pos"
 
 @sio.event
@@ -149,19 +144,23 @@ def authenticated(data):
     logger.debug('R-Keeper backup server Plugin authenticated')
     connected = True
 
+
 @sio.event
 def responseOrder(data):
     global success
     logger.debug('responseOrder')
     success = True
 
+
 @sio.event
 def auth_confirmation(data):
     logger.debug('auth_confirmation')
 
+
 @sio.event
 def authentication_error(data):
     logger.debug('authentication_error')
+
 
 @sio.event
 def disconnect():
@@ -169,53 +168,51 @@ def disconnect():
     connected = False
     logger.debug('R-Keeper has been disconnected')
     sio.disconnect()
-    time.sleep (5)
-
-
-
-
-
-
-
+    time.sleep(5)
 
 
 ################################################################################################
 ############################### Sending data scheduller ########################################
 ################################################################################################
-def sendOrder(in_contents): # Sending order every 2 seconds, while "responceOrder" received
+def sendOrder(in_contents):  # Sending order every 2 seconds, while "responceOrder" received
     global success
     global connected
     success = False
     contents = json.loads(in_contents)
     try:
-        if sio.connected ==True:
+        if sio.connected == True:
             while success == False:
-                #connector()
-               sio.emit('posOrder', contents)
-               sio.sleep(2)
-               if success == True:
-                    toSend.remove(in_contents)
+                # connector()
+                sio.emit('posOrder', contents)
+                time.sleep(3)
+                if success == True:
+                    toSend.remove(in_contents)  # removing
 
         else:
             connected = False
-            print ('Something wrong, reconnecting')
-            trys = 5 # Количество попыток
+            print('Something wrong, reconnecting')
+            trys = 5  # Количество попыток
             connector(1)
             while success == False:
-                trys -=1
+                trys -= 1
                 sio.emit('posOrder', contents)
-                sio.sleep(2)
-                if trys <=0:
+                time.sleep(3)
+                if success == True:
+                    toSend.remove(in_contents)  # removing
+
+                if trys <= 0:
                     break
     except Exception as e:
         logger.critical("ZZZZZZZZZZZZZZZZZZZZZZ Can't send order ZZZZZZZZZZZZZZZZZZZZ")
         logger.critical(' %s ' % e)
         logger.critical('ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ')
 
-toSend=[]  # This variable stores all checks than was not sent yet
+
+toSend = []  # This variable stores all checks than was not sent yet
+
 
 def sender():
-    if len (toSend) > 0:
+    if len(toSend) > 0:
         toSend2 = toSend
         for i in toSend2:
             try:
@@ -230,58 +227,64 @@ job_defaults = {
     'coalesce': False,
     'max_instances': 1
 }
-sched = BackgroundScheduler(daemon=True,job_defaults=job_defaults)
-sched.add_job(sender,IntervalTrigger(seconds=10), id='autosender', replace_existing=True)
+sched = BackgroundScheduler(daemon=True, job_defaults=job_defaults)
+sched.add_job(sender, IntervalTrigger(seconds=10), id='autosender', replace_existing=True)
 sched.start()
+
 
 ################################################################################################
 ######################################End sending data scheduller###############################
 ################################################################################################
 
 
-
 ##########Читаем файл с XML запросом#########
 def CashPlansToSql():
     try:
         headers = {'Content-Type': 'application/xml', 'Accept-Encoding': 'identity'}
-        urllib3.disable_warnings() #отключаем ошибку orllib3
+        urllib3.disable_warnings()  # отключаем ошибку orllib3
         xml_1 = '''<?xml version="1.0" encoding="windows-1251"?>
     <RK7Query>
     <RK7CMD CMD="GetRefData" RefName="TABLES"/>
-    </RK7Query>''' #столы
+    </RK7Query>'''  # столы
         xml_2 = '''<?xml version="1.0" encoding="windows-1251"?>
     <RK7Query>
     <RK7CMD CMD="GetRefData" RefName="HALLPLANS"/>
-    </RK7Query>''' #перечень планов зала и столы
+    </RK7Query>'''  # перечень планов зала и столы
         xml_3 = '''<?xml version="1.0" encoding="windows-1251"?>
     <RK7Query>
     <RK7CMD CMD="GetRefData" RefName="CASHES"/>
-    </RK7Query>''' #имя кассы и план зала по умолчанию
+    </RK7Query>'''  # имя кассы и план зала по умолчанию
         xml_4 = '''<?xml version="1.0" encoding="utf-8"?>
     <RK7Query>
         <RK7CMD CMD="GetRefData" RefName="MenuItems"/>
-    </RK7Query>''' #меню
+    </RK7Query>'''  # меню
         xml_5 = '''<?xml version="1.0" encoding="utf-8"?>
     <RK7Query>
         <RK7CMD CMD="GetRefData" RefName="PRICES"/>
-    </RK7Query>''' #цены
+    </RK7Query>'''  # цены
         host = XMLInterface
-        MenuItem1 = requests.post(host, verify=False, data=xml_1, headers=headers, auth=('HTTP', '1')).text #столы
-        MenuItem2 = requests.post(host, verify=False, data=xml_2, headers=headers, auth=('HTTP', '1')).text #перечень планов зала и столы
-        MenuItem3 = requests.post(host, verify=False, data=xml_3, headers=headers, auth=('HTTP', '1')).text #имя кассы и план зала по умолчанию
-        MenuItem4 = requests.post(host, verify=False, data=xml_4, headers=headers, auth=('HTTP', '1')).text #меню
-        MenuItem5 = requests.post(host, verify=False, data=xml_5, headers=headers, auth=('HTTP', '1')).text #цены
-        root1 = ET.fromstring(MenuItem1) #столы
-        root2 = ET.fromstring(MenuItem2) #перечень планов зала и столы
-        root3 = ET.fromstring(MenuItem3) #имя кассы и план зала по умолчанию
-        root4 = ET.fromstring(MenuItem4) #меню
-        root5 = ET.fromstring(MenuItem5) #цены
+        MenuItem1 = requests.post(host, verify=False, data=xml_1, headers=headers, auth=('HTTP', '1')).text  # столы
+        MenuItem2 = requests.post(host, verify=False, data=xml_2, headers=headers,
+                                  auth=('HTTP', '1')).text  # перечень планов зала и столы
+        MenuItem3 = requests.post(host, verify=False, data=xml_3, headers=headers,
+                                  auth=('HTTP', '1')).text  # имя кассы и план зала по умолчанию
+        MenuItem4 = requests.post(host, verify=False, data=xml_4, headers=headers, auth=('HTTP', '1')).text  # меню
+        MenuItem5 = requests.post(host, verify=False, data=xml_5, headers=headers, auth=('HTTP', '1')).text  # цены
+        root1 = ET.fromstring(MenuItem1)  # столы
+        root2 = ET.fromstring(MenuItem2)  # перечень планов зала и столы
+        root3 = ET.fromstring(MenuItem3)  # имя кассы и план зала по умолчанию
+        root4 = ET.fromstring(MenuItem4)  # меню
+        root5 = ET.fromstring(MenuItem5)  # цены
         global cashes, all_tables, all_halls, itemsAttribs, prices
-        itemsAttribs = [x.attrib for x in root4.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #элементы меню
-        cashes = [x.attrib for x in root3.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все кассы(тут берём инфу по станции, её ID  и ID плана зала)
-        all_tables = [x.attrib for x in root1.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все столы(тут имя стола, его Guid и ID плана зала)
-        all_halls = [x.attrib for x in root2.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все планы залов(ID)
-        prices = [x.attrib for x in root5.findall('RK7Reference')[0].findall('Items')[0].findall('Item')] #все цены
+        itemsAttribs = [x.attrib for x in
+                        root4.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]  # элементы меню
+        cashes = [x.attrib for x in root3.findall('RK7Reference')[0].findall('Items')[0].findall(
+            'Item')]  # все кассы(тут берём инфу по станции, её ID  и ID плана зала)
+        all_tables = [x.attrib for x in root1.findall('RK7Reference')[0].findall('Items')[0].findall(
+            'Item')]  # все столы(тут имя стола, его Guid и ID плана зала)
+        all_halls = [x.attrib for x in
+                     root2.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]  # все планы залов(ID)
+        prices = [x.attrib for x in root5.findall('RK7Reference')[0].findall('Items')[0].findall('Item')]  # все цены
 
         #########connect_hall.db########
         if os.path.exists('rk_item.db'):  # проверяем наличие rk_item.db, если нет базы, то создаём
@@ -300,35 +303,36 @@ def CashPlansToSql():
 
         db = sqlite3.connect('rk_item.db')  # обращение к базе sqlite
         cursor = db.cursor()
-        clear = "DELETE FROM hall" #очищаем таблицу с планами зала и столами
+        clear = "DELETE FROM hall"  # очищаем таблицу с планами зала и столами
         cursor.execute(clear)
-        clear2 = "DELETE FROM hallplans" #очищаем таблицу с названием кассы и планом зала по умолчанию
+        clear2 = "DELETE FROM hallplans"  # очищаем таблицу с названием кассы и планом зала по умолчанию
         cursor.execute(clear2)
-        clear3 = "DELETE FROM tables" #очищаем таблицу со столами
+        clear3 = "DELETE FROM tables"  # очищаем таблицу со столами
         cursor.execute(clear3)
-        clear4 = "DELETE FROM menuitems" #очищаем таблицу с меню
+        clear4 = "DELETE FROM menuitems"  # очищаем таблицу с меню
         cursor.execute(clear4)
-        clear5 = "DELETE FROM prices" #очищаем таблицу с ценами
+        clear5 = "DELETE FROM prices"  # очищаем таблицу с ценами
         cursor.execute(clear5)
         db.commit()
         for attrib in cashes:
-            toSql = str(list(attrib.values()))# Преобразуем список значений словаря в строку - так надо для записи в SQL
-            toSql = re.sub(r'\[|\]','',toSql)# Убираем все дурацкие символы, которые не любит SQL
-            cursor.execute('''INSERT INTO hall VALUES ('''+ toSql + ''' )''')# Пишем в SQL
+            toSql = str(
+                list(attrib.values()))  # Преобразуем список значений словаря в строку - так надо для записи в SQL
+            toSql = re.sub(r'\[|\]', '', toSql)  # Убираем все дурацкие символы, которые не любит SQL
+            cursor.execute('''INSERT INTO hall VALUES (''' + toSql + ''' )''')  # Пишем в SQL
         for attrib in all_halls:
             toSql = str(list(attrib.values()))
-            toSql = re.sub(r'\[|\]','',toSql)
-            cursor.execute('''INSERT INTO hallplans VALUES ('''+ toSql + ''' )''')
+            toSql = re.sub(r'\[|\]', '', toSql)
+            cursor.execute('''INSERT INTO hallplans VALUES (''' + toSql + ''' )''')
         for attrib in all_tables:
             toSql = str(list(attrib.values()))
-            toSql = re.sub(r'\[|\]','',toSql)
-            cursor.execute('''INSERT INTO tables VALUES ('''+ toSql + ''' )''')
+            toSql = re.sub(r'\[|\]', '', toSql)
+            cursor.execute('''INSERT INTO tables VALUES (''' + toSql + ''' )''')
         for attrib in itemsAttribs:
             toSql = str(list(attrib.values()))
             toSql = re.sub(r'\[|\]', '', toSql)
             cursor.execute('''INSERT INTO menuitems VALUES (''' + toSql + ''' )''')
         for attrib in prices:
-            if list(attrib.values())[6] == '1025352' and list(attrib.values())[5] == 'psDish': #price type
+            if list(attrib.values())[6] == '1025352' and list(attrib.values())[5] == 'psDish':  # price type
                 toSql = str(list(attrib.values()))
                 toSql = re.sub(r'\[|\]', '', toSql)
                 cursor.execute('''INSERT INTO prices VALUES (''' + toSql + ''' )''')
@@ -336,6 +340,7 @@ def CashPlansToSql():
     except Exception as e:
         logger.critical('Failed to get cashplans to sql')
         logger.critical(e)
+
 
 ##############получаем план зала, столы и guid#################
 def RequestNameInHall(hall_ident):
@@ -352,9 +357,9 @@ def RequestNameInHall(hall_ident):
         global plans
         plans = []
         for x in dishdetails:
-            plans.append({'Number': x[0], 'Id': re.sub(r'\{|\}','',x[1])})
-        for y in dishdetails: # ToDO Зачем здесь итерация?
-            hall = {'Name': y[2]} # ToDO hall перезапишется последним значением из итерации
+            plans.append({'Number': x[0], 'Id': re.sub(r'\{|\}', '', x[1])})
+        for y in dishdetails:  # ToDO Зачем здесь итерация?
+            hall = {'Name': y[2]}  # ToDO hall перезапишется последним значением из итерации
             hall['Tables'] = plans
             return hall
     except Exception as e:
@@ -377,20 +382,30 @@ def RequestAllMenu():
         logger.info('End func ' + ' RequestMenu ' + time.strftime('%H:%M:%S %d.%m.%y', time.localtime()) + '\n')
         dishdetails = cursor.fetchall()
         for item in dishdetails:
-            price = str(int(item[4]) / 100) #приводим в правильный вид цену
-            products.append({'Price': price, 'Type': 'Dish', 'Name': item[3], 'Code': item[2], 'Id': re.sub(r'\{|\}','',item[1])})
+            price = str(int(item[4]) / 100)  # приводим в правильный вид цену
+            products.append(
+                {'Price': price, 'Type': 'Dish', 'Name': item[3], 'Code': item[2], 'Id': re.sub(r'\{|\}', '', item[1])})
         return products
     except Exception as e:
         logger.critical('Failed to RequestAllMenu')
         logger.critical(e)
+
+
 ##############конвертируем текущий формат даты#############
 def DtimeConvert():
     JavaDtime = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f+03:00')
     return JavaDtime
+
+
 ##############конвертируем заданны формат даты#############
 def OrdertimeConvert(dtime):
-    OrderDtime = (datetime.strptime(dtime, '%d.%m.%Y %H:%M:%S')).strftime('%Y-%m-%dT%H:%M:00.%f+03:00')
+    try:
+        OrderDtime = (datetime.strptime(dtime, '%d.%m.%Y %H:%M:%S')).strftime('%Y-%m-%dT%H:%M:00.%f+03:00')
+    except:
+        OrderDtime = "empty"
     return OrderDtime
+
+
 ###########получаем информацию о планах зала, столах и меню##########
 def info_station():
     try:
@@ -419,7 +434,6 @@ def info_station():
         logger.critical(e)
 
 
-
 # ----------------------------------- Main Loop --------------------------------------
 try:
     sock = socket.socket()
@@ -435,7 +449,7 @@ try:
 except:
     logger.critical("No connection to R-Keeper XML")
     sys.exit()
-status = False #используется для того чтобы каждый раз не переписывать order_full при login
+status = False  # используется для того чтобы каждый раз не переписывать order_full при login
 logger.info('MainLoop Started.')
 while True:
     try:
@@ -449,7 +463,7 @@ while True:
     except Exception as e:
         logger.critical('Can not convert RK data to string, may be wrong encoding')
         logger.debug(e)
-        data =''
+        data = ''
     try:
         root = ET.fromstring(data)
     except Exception as e:
@@ -460,7 +474,7 @@ while True:
         inside = child.attrib
         if child.tag == 'LogIn':  # Login посылается всего один раз. Передаются планы залов, столы и меню
             if status == False:
-                authObject = info_station()# Получаем authObject
+                authObject = info_station()  # Получаем authObject
                 connector(1)
                 status = True
                 logger.debug('Starting connection to SIO')
@@ -505,7 +519,7 @@ while True:
                         "Comment": "",
                         'Deleted': Deleted,
                         "DeletionMethod": None,
-                        'PrintTime':OrdertimeConvert(x.find('Packet').attrib['WasPrinted']),
+                        'PrintTime': OrdertimeConvert(x.find('Packet').attrib['WasPrinted']),
                         "ServeTime": None,
                         "Modifiers": []
                     }
@@ -535,19 +549,21 @@ while True:
                     'Guests': Guests,
                     "PaymentItems": []
                 }
+                if Order['OpenTime'] == 'empty':
+                    Order['OpenTime'] = Product['PrintTime']
                 randomOrder = {
                     'Type': "PrintedProductsChanged",
                     'Order': Order,
                     "Idempotency_key": None
                 }
-                if Product['Deleted'] == True: #если полностью удалён
+                if Product['Deleted'] == True:  # если полностью удалён
                     output = json.dumps(randomOrder, ensure_ascii=False, indent=1)
                     orderObject = output
-                    #sendOrder(orderObject)
+                    # sendOrder(orderObject)
                     if randomOrder['Order']['Guests'][0]['Products']:
                         toSend.append(orderObject)  #
                     else:
-                        logger.debug ('Order with other than choosen GUID')
+                        logger.debug('Order with other than choosen GUID')
             except Exception as e:
                 logger.critical('Failed parsing ScreenCheck')
                 logger.critical(e)
@@ -556,7 +572,7 @@ while True:
             try:
                 output = json.dumps(randomOrder, ensure_ascii=False, indent=1)
                 orderObject = output
-                #sendOrder(orderObject)
+                # sendOrder(orderObject)
                 if randomOrder['Order']['Guests'][0]['Products']:
                     toSend.append(orderObject)
                 else:
@@ -628,6 +644,8 @@ while True:
                     'Guests': Guests,
                     "PaymentItems": []
                 }
+                if Order['OpenTime'] == 'empty':
+                    Order['OpenTime'] = Product['PrintTime']
                 randomOrder2 = {
                     'Type': "PrintedProductsChanged",
                     'Order': Order,
@@ -642,11 +660,11 @@ while True:
                         logger.debug('========================OrderObject End====================')
                     except:
                         logger.debug("Can't write orderObject")
-                    #sendOrder(orderObject)
+                    # sendOrder(orderObject)
                     if randomOrder['Order']['Guests'][0]['Products']:
                         toSend.append(orderObject)
                     else:
-                        logger.debug ('Order with other than choosen GUID')
+                        logger.debug('Order with other than choosen GUID')
             except Exception as e:
                 logger.critical('Failed parsing StoreCheck')
                 logger.critical(e)
